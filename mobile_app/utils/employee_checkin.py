@@ -1,5 +1,10 @@
 import frappe
 from frappe import _
+from frappe.utils import now_datetime
+
+
+
+
 
 @frappe.whitelist()
 def get_employee_checkins_with_images(filters=None, limit_start=0, limit_page_length=10000):
@@ -39,3 +44,45 @@ def get_employee_checkins_with_images(filters=None, limit_start=0, limit_page_le
         response.append(checkin)
     
     return response
+
+
+
+
+
+def check_employee_checkins():
+    try:
+        # Get all employees
+        employees = frappe.get_all("Employee", fields=["name", "employee_name"])
+
+        for employee in employees:
+            # Get the latest check-in log for the employee
+            last_checkin = frappe.db.get_value("Employee Checkin", 
+                                               {"employee": employee.name}, 
+                                               ["log_type", "time"], 
+                                               order_by="time desc")
+            
+            # Check if the last log is "IN"
+            if last_checkin and last_checkin[0] == "IN":
+                # Check if an "OUT" log is missing for the day
+                current_date = now_datetime().date()
+                check_out_exists = frappe.db.exists("Employee Checkin", {
+                    "employee": employee.name,
+                    "log_type": "OUT",
+                    "time": ["between", [str(current_date) + " 00:00:00", str(current_date) + " 23:59:59"]]
+                })
+                
+                if not check_out_exists:
+                    # Insert an "OUT" log automatically
+                    checkin_doc = frappe.get_doc({
+                        "doctype": "Employee Checkin",
+                        "employee": employee.name,
+                        "employee_name": employee.employee_name,
+                        "log_type": "SYS OUT",
+                        "time": now_datetime()
+                    })
+                    checkin_doc.insert()
+                    frappe.db.commit()
+        
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Employee Checkin Scheduler Error")
+

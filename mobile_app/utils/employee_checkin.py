@@ -6,6 +6,7 @@ from frappe.utils import now_datetime
 
 
 
+
 @frappe.whitelist()
 def get_employee_checkins_with_images(filters=None, limit_start=0, limit_page_length=10000):
     if filters:
@@ -51,18 +52,25 @@ def get_employee_checkins_with_images(filters=None, limit_start=0, limit_page_le
 
 def check_employee_checkins():
     try:
+        print("rehan")
         # Get all employees
         employees = frappe.get_all("Employee", fields=["name", "employee_name"])
 
+        
         for employee in employees:
+            # if employee.name == "HR-EMP-00045":
+            print("Employee check",employee.name)
             # Get the latest check-in log for the employee
             last_checkin = frappe.db.get_value("Employee Checkin", 
-                                               {"employee": employee.name}, 
-                                               ["log_type", "time"], 
-                                               order_by="time desc")
+                                            {"employee": employee.name}, 
+                                            ["log_type", "time"], 
+                                            order_by="time desc")
+            
+            print("last checkin",last_checkin)
             
             # Check if the last log is "IN"
             if last_checkin and last_checkin[0] == "IN":
+                print("enter in")
                 # Check if an "OUT" log is missing for the day
                 current_date = now_datetime().date()
                 check_out_exists = frappe.db.exists("Employee Checkin", {
@@ -70,17 +78,26 @@ def check_employee_checkins():
                     "log_type": "OUT",
                     "time": ["between", [str(current_date) + " 00:00:00", str(current_date) + " 23:59:59"]]
                 })
+
+                print("checout", check_out_exists)
                 
                 if not check_out_exists:
+                    print("if not")
+                    time_8pm = current_date.strftime("%Y-%m-%d") + " 20:00:00"
+
                     # Insert an "OUT" log automatically
                     checkin_doc = frappe.get_doc({
                         "doctype": "Employee Checkin",
                         "employee": employee.name,
                         "employee_name": employee.employee_name,
                         "log_type": "SYS OUT",
-                        "time": now_datetime()
+                        "timeinaddress": "SYSTEM ADDED ADDRESS",
+                        "time": time_8pm,
+                        "posting_date": str(current_date)
                     })
-                    checkin_doc.insert()
+                    
+                    checkin_doc.insert() 
+                    
                     frappe.db.commit()
         
     except Exception as e:

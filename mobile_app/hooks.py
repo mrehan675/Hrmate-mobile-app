@@ -106,6 +106,16 @@ app_license = "MIT"
 # Scheduled Tasks
 # ---------------
 
+scheduler_events = {
+	
+	"daily_long": [
+		"mobile_app.utils.employee_checkin.check_employee_checkins"
+	],
+    
+	
+}
+
+
 # scheduler_events = {
 # 	"all": [
 # 		"mobile_app.tasks.all"

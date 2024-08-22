@@ -106,14 +106,23 @@ app_license = "MIT"
 # Scheduled Tasks
 # ---------------
 
-scheduler_events = {
+# scheduler_events = {
 	
-	"daily_long": [
-		"mobile_app.utils.employee_checkin.check_employee_checkins"
-	],
+# 	"daily_long": [
+# 		"mobile_app.utils.employee_checkin.check_employee_checkins"
+# 	],
     
 	
+# }
+
+scheduler_events = {
+    "cron": {
+        "55 23 * * *": [
+            "mobile_app.utils.employee_checkin.check_employee_checkins"
+        ]
+    }
 }
+
 
 
 # scheduler_events = {

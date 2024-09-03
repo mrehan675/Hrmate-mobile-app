@@ -1,9 +1,36 @@
 import frappe
 from frappe import _
 from frappe.utils import now_datetime
+from frappe.utils import nowdate
 
+@frappe.whitelist()
+def get_latest_checkins_status(employee, posting_date=None):
+    if not posting_date:
+        posting_date = nowdate()
 
+    latest_checkin = frappe.db.get_all(
+        "Employee Checkin",
+        filters={
+            "employee": employee,
+            "posting_date": posting_date
+        },
+        fields=["name", "log_type", "time", "posting_date"],
+        order_by="time desc",
+        limit=1
+    )
 
+     # Fetch the is_camera field from the Mobile Settings single DocType
+    mobile_settings = frappe.get_single("Mobile App Setting")
+    is_camera = mobile_settings.is_camera
+
+    if latest_checkin:
+        latest_checkin[0]["is_camera"] = is_camera
+        return latest_checkin[0]
+    else:
+        return {
+            "message": "No check-ins found for this employee on the given date",
+            "is_camera": is_camera
+        }
 
 
 
@@ -55,28 +82,34 @@ def check_employee_checkins():
         print("rehan")
         # Get all employees
         employees = frappe.get_all("Employee", fields=["name", "employee_name"])
+        current_date = now_datetime().date()
 
-        
         for employee in employees:
-            # if employee.name == "HR-EMP-00045":
+            # if employee.name == "HR-EMP-00002":
             print("Employee check",employee.name)
-            # Get the latest check-in log for the employee
-            last_checkin = frappe.db.get_value("Employee Checkin", 
-                                            {"employee": employee.name}, 
-                                            ["log_type", "time"], 
-                                            order_by="time desc")
+
+
+            # Check if there is any "IN" check-in for today
+            in_checkins = frappe.db.get_value(
+                "Employee Checkin",
+                {
+                    "employee": employee.name,
+                    "posting_date": current_date,
+                    "log_type": "IN"
+                },
+                [ "time", "company"]
+            )
             
-            print("last checkin",last_checkin)
+            print("IN checkin",in_checkins)
             
             # Check if the last log is "IN"
-            if last_checkin and last_checkin[0] == "IN":
+            if in_checkins:
                 print("enter in")
-                # Check if an "OUT" log is missing for the day
-                current_date = now_datetime().date()
+                
                 check_out_exists = frappe.db.exists("Employee Checkin", {
                     "employee": employee.name,
                     "log_type": "OUT",
-                    "time": ["between", [str(current_date) + " 00:00:00", str(current_date) + " 23:59:59"]]
+                    "posting_date": current_date
                 })
 
                 print("checout", check_out_exists)
@@ -85,7 +118,7 @@ def check_employee_checkins():
                     print("if not")
                     time_8pm = current_date.strftime("%Y-%m-%d") + " 20:00:00"
 
-                    # Insert an "OUT" log automatically
+                    # Insert an "SYS OUT" log automatically
                     checkin_doc = frappe.get_doc({
                         "doctype": "Employee Checkin",
                         "employee": employee.name,
@@ -93,13 +126,14 @@ def check_employee_checkins():
                         "log_type": "SYS OUT",
                         "timeinaddress": "SYSTEM ADDED ADDRESS",
                         "time": time_8pm,
+                        "company": in_checkins[1],
                         "posting_date": str(current_date)
                     })
                     
                     checkin_doc.insert() 
                     
                     frappe.db.commit()
-        
+            
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "Employee Checkin Scheduler Error")
 

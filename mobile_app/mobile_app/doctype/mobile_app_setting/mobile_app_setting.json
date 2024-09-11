@@ -10,7 +10,12 @@
   "is_camera",
   "column_break_3",
   "token",
-  "custom_token"
+  "custom_token",
+  "allowed_user",
+  "time_cycle_settings_section",
+  "cycle_start_time",
+  "column_break_9",
+  "cycle_end_time"
  ],
  "fields": [
   {
@@ -38,12 +43,36 @@
    "fieldname": "is_camera",
    "fieldtype": "Check",
    "label": "Is Camera"
+  },
+  {
+   "fieldname": "allowed_user",
+   "fieldtype": "Data",
+   "label": "Allowed User"
+  },
+  {
+   "fieldname": "time_cycle_settings_section",
+   "fieldtype": "Section Break",
+   "label": "Time Cycle Settings"
+  },
+  {
+   "fieldname": "cycle_start_time",
+   "fieldtype": "Time",
+   "label": "Cycle Start Time"
+  },
+  {
+   "fieldname": "column_break_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cycle_end_time",
+   "fieldtype": "Time",
+   "label": "Cycle End Time"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-06-05 15:58:04.605195",
+ "modified": "2024-09-05 16:25:21.958652",
  "modified_by": "Administrator",
  "module": "mobile_app",
  "name": "Mobile App Setting",

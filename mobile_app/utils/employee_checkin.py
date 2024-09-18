@@ -160,7 +160,7 @@ def up_new_get_latest_checkins_status(employee, time=None):
     #     }
     if latest_checkin:
         latest_checkin[0]["is_camera"] = is_camera
-        return latest_checkin[0], start_time, end_time
+        return latest_checkin[0]
     else:
         return {
             "message": "No check-ins found for this employee within the cycle time",
